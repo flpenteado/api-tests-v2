@@ -1,83 +1,186 @@
-import Image from 'next/image';
-
 export default function Home() {
   return (
-    <div className="grid min-h-screen grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-8 pb-20 font-sans sm:p-20">
-      <main className="row-start-2 flex flex-col items-center gap-[32px] sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-center font-mono text-sm/6 sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{' '}
-            <code className="rounded bg-black/[.05] px-1 py-0.5 font-mono font-semibold dark:bg-white/[.06]">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex flex-col items-center gap-4 sm:flex-row">
-          <a
-            className="bg-foreground text-background flex h-10 items-center justify-center gap-2 rounded-full border border-solid border-transparent px-4 text-sm font-medium transition-colors hover:bg-[#383838] sm:h-12 sm:w-auto sm:px-5 sm:text-base dark:hover:bg-[#ccc]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="flex h-10 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-4 text-sm font-medium transition-colors hover:border-transparent hover:bg-[#f2f2f2] sm:h-12 sm:w-auto sm:px-5 sm:text-base md:w-[158px] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="bg-app min-h-screen">
+      {/* Top bar */}
+      <header className="topbar">
+        <h1 className="text-lg font-semibold">API Tests v2</h1>
+        <div className="ml-auto flex items-center gap-3">
+          <span className="badge">v2.0.0</span>
+          <button className="btn-base btn-ghost btn-sm">Settings</button>
         </div>
-      </main>
-      <footer className="row-start-3 flex flex-wrap items-center justify-center gap-[24px]">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image aria-hidden src="/file.svg" alt="File icon" width={16} height={16} />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image aria-hidden src="/window.svg" alt="Window icon" width={16} height={16} />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image aria-hidden src="/globe.svg" alt="Globe icon" width={16} height={16} />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </header>
+
+      {/* Main layout */}
+      <div className="flex">
+        {/* Sidebar */}
+        <aside className="sidebar min-h-[calc(100vh-48px)] w-64">
+          <div className="p-4">
+            <h2 className="text-secondary mb-3 text-sm font-medium">Collections</h2>
+            <div className="space-y-1">
+              <div className="sidebar-item active">
+                <span className="text-sm">My Workspace</span>
+              </div>
+              <div className="sidebar-item">
+                <span className="text-sm">API Documentation</span>
+              </div>
+              <div className="sidebar-item">
+                <span className="text-sm">Test Environments</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        {/* Main content */}
+        <main className="flex-1 p-6">
+          <div className="mx-auto max-w-4xl">
+            {/* Welcome section */}
+            <div className="mb-8">
+              <h1 className="text-primary mb-2 text-2xl font-bold">Welcome to API Tests v2</h1>
+              <p className="text-secondary">
+                A modern API testing application with a Postman-like interface, built with Next.js
+                and designed for efficiency.
+              </p>
+            </div>
+
+            {/* Feature cards */}
+            <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <div className="card">
+                <h3 className="mb-2 font-semibold">API Testing</h3>
+                <p className="text-secondary mb-4 text-sm">
+                  Send HTTP requests and analyze responses with our intuitive interface.
+                </p>
+                <button className="btn-base btn-primary btn-sm">Get Started</button>
+              </div>
+
+              <div className="card">
+                <h3 className="mb-2 font-semibold">Collections</h3>
+                <p className="text-secondary mb-4 text-sm">
+                  Organize your API endpoints into collections for better workflow management.
+                </p>
+                <button className="btn-base btn-secondary btn-sm">Create Collection</button>
+              </div>
+
+              <div className="card">
+                <h3 className="mb-2 font-semibold">Environment Variables</h3>
+                <p className="text-secondary mb-4 text-sm">
+                  Manage different environments and variables for your API testing workflows.
+                </p>
+                <button className="btn-base btn-ghost btn-sm">Manage</button>
+              </div>
+            </div>
+
+            {/* Example API request */}
+            <div className="card mb-8">
+              <h3 className="mb-4 font-semibold">Example API Request</h3>
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <span className="badge">GET</span>
+                  <input
+                    type="text"
+                    className="input-base flex-1"
+                    placeholder="https://jsonplaceholder.typicode.com/posts/1"
+                    defaultValue="https://jsonplaceholder.typicode.com/posts/1"
+                  />
+                  <button className="btn-base btn-brand">Send</button>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div>
+                    <h4 className="text-secondary mb-2 text-sm font-medium">Headers</h4>
+                    <div className="code-block">
+                      {`Content-Type: application/json
+Authorization: Bearer token123`}
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="text-secondary mb-2 text-sm font-medium">Response</h4>
+                    <div className="code-block">
+                      {`{
+  "id": 1,
+  "title": "Example Post",
+  "body": "This is an example response",
+  "userId": 1
+}`}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div className="mb-8 flex flex-wrap gap-4">
+              <button className="btn-base btn-primary">New Request</button>
+              <button className="btn-base btn-secondary">Import Collection</button>
+              <button className="btn-base btn-ghost">View Documentation</button>
+              <button className="btn-base btn-destructive btn-sm">Clear All</button>
+            </div>
+
+            {/* Status indicators */}
+            <div className="mb-8 flex flex-wrap gap-3">
+              <span className="tag">Status: Ready</span>
+              <span className="tag">Environment: Development</span>
+              <span className="tag">Requests: 0</span>
+            </div>
+
+            {/* Table example */}
+            <div className="card">
+              <h3 className="mb-4 font-semibold">Recent Requests</h3>
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Method</th>
+                    <th>URL</th>
+                    <th>Status</th>
+                    <th>Time</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <span className="badge">GET</span>
+                    </td>
+                    <td className="text-secondary">/api/users</td>
+                    <td>
+                      <span className="text-success">200</span>
+                    </td>
+                    <td className="text-muted">145ms</td>
+                    <td>
+                      <button className="btn-base btn-ghost btn-sm">View</button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <span className="badge">POST</span>
+                    </td>
+                    <td className="text-secondary">/api/users</td>
+                    <td>
+                      <span className="text-success">201</span>
+                    </td>
+                    <td className="text-muted">267ms</td>
+                    <td>
+                      <button className="btn-base btn-ghost btn-sm">View</button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <span className="badge">DELETE</span>
+                    </td>
+                    <td className="text-secondary">/api/users/123</td>
+                    <td>
+                      <span className="text-danger">404</span>
+                    </td>
+                    <td className="text-muted">89ms</td>
+                    <td>
+                      <button className="btn-base btn-ghost btn-sm">View</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
