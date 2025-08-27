@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs';
 
-import { JsonEditor } from './JsonEditor';
+import { JsonEditor } from '@/app/components/json-editor';
 
 const meta = {
   title: 'JsonEditor',
@@ -18,12 +18,6 @@ const defaultJson = `
 }
 `;
 
-export const Default: Story = {
-  args: {
-    value: defaultJson,
-  },
-};
-
 const jsonWithVars = `
 {
   "name": "John Doe",
@@ -32,12 +26,36 @@ const jsonWithVars = `
 }
 `;
 
+const jsonWithErrors = `
+{
+  "name": "John Doe"
+  "age": {{idade}}
+  "email": "john.doe@example.com"
+}
+`;
+
+export const Default: Story = {
+  name: 'default',
+  args: {
+    value: defaultJson,
+  },
+};
+
 export const WithVariables: Story = {
-  name: 'With variables',
+  name: 'with variables',
   args: {
     value: jsonWithVars,
     onChange: (v: string) => {
-      // eslint-disable-next-line no-console
+      console.log('Changed:', v);
+    },
+  },
+};
+
+export const WithErrors: Story = {
+  name: 'with errors',
+  args: {
+    value: jsonWithErrors,
+    onChange: (v: string) => {
       console.log('Changed:', v);
     },
   },
