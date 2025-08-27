@@ -23,3 +23,22 @@ export const Default: Story = {
     value: defaultJson,
   },
 };
+
+const jsonWithVars = `
+{
+  "name": "John Doe",
+  "age": {{idade}},
+  "email": "john.doe@example.com"
+}
+`;
+
+export const WithVariables: Story = {
+  name: 'With variables',
+  args: {
+    value: jsonWithVars,
+    onChange: (v: string) => {
+      // eslint-disable-next-line no-console
+      console.log('Changed:', v);
+    },
+  },
+};
