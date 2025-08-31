@@ -5,9 +5,9 @@ import type { editor as MonacoEditorType } from 'monaco-editor';
 
 import {
   VARIABLE_REGEX,
+  type ValidationError,
   formatJsonWithVariables,
   validateJsonWithVariables,
-  type ValidationError,
 } from '@/app/utils/jsonUtils';
 
 export type JsonEditorProps = {
@@ -25,7 +25,7 @@ function useVariableDecorations(
     if (!editor || typeof editor.deltaDecorations !== 'function') return;
     const model = editor.getModel();
     if (!model) return;
-    
+
     // Aguarda a disponibilidade do Monaco global
     const applyDecorations = () => {
       const Monaco = (window as any).monaco;
@@ -34,7 +34,7 @@ function useVariableDecorations(
         setTimeout(applyDecorations, 50);
         return;
       }
-      
+
       const matches = [...value.matchAll(VARIABLE_REGEX)];
       const decorations = matches.map(match => {
         const start = match.index ?? 0;
@@ -53,11 +53,8 @@ function useVariableDecorations(
           },
         };
       });
-      
-      decorationsRef.current = editor.deltaDecorations(
-        decorationsRef.current,
-        decorations
-      );
+
+      decorationsRef.current = editor.deltaDecorations(decorationsRef.current, decorations);
     };
 
     applyDecorations();
@@ -80,16 +77,15 @@ function useValidationMarkers(
     Monaco.editor.setModelMarkers(model, 'json-validation', []);
 
     if (!validation.isValid && validation.errors.length > 0) {
-      const markers = validation.errors.map((error) => {
+      const markers = validation.errors.map(error => {
         const startLineNumber = error.line || 1;
         const startColumn = error.column || 1;
-        
+
         // Se temos offset, calculamos posições mais precisas
         let endLineNumber = startLineNumber;
         let endColumn = startColumn;
-        
+
         if (error.startOffset !== undefined && error.endOffset !== undefined) {
-          const startPos = model.getPositionAt(error.startOffset);
           const endPos = model.getPositionAt(error.endOffset);
           endLineNumber = endPos.lineNumber;
           endColumn = endPos.column;
@@ -124,7 +120,7 @@ export function JsonEditor({ value, onChange }: JsonEditorProps) {
 
   // Decoração dos placeholders - só aplica quando o editor estiver pronto
   useVariableDecorations(isEditorReady ? editorRef.current : null, editorText);
-  
+
   // Marcadores de validação no editor
   useValidationMarkers(isEditorReady ? editorRef.current : null, validation);
 
@@ -205,12 +201,12 @@ export function JsonEditor({ value, onChange }: JsonEditorProps) {
           transition: 'all 0.2s ease',
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
         }}
-        onMouseEnter={(e) => {
+        onMouseEnter={e => {
           e.currentTarget.style.background = 'rgba(60, 60, 60, 0.95)';
           e.currentTarget.style.transform = 'translateY(-1px)';
           e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.4)';
         }}
-        onMouseLeave={(e) => {
+        onMouseLeave={e => {
           e.currentTarget.style.background = 'rgba(40, 40, 40, 0.9)';
           e.currentTarget.style.transform = 'translateY(0)';
           e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.3)';

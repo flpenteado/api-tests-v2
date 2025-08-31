@@ -8,14 +8,14 @@ export type ValidationError = {
   endOffset?: number;
 };
 
-export function validateJsonWithVariables(text: string): { 
-  isValid: boolean; 
-  errors: ValidationError[] 
+export function validateJsonWithVariables(text: string): {
+  isValid: boolean;
+  errors: ValidationError[];
 } {
   const errors: ValidationError[] = [];
   const matches = [...text.matchAll(/{{(.*?)}}/g)];
   let replaced = text;
-  
+
   // Valida variáveis
   matches.forEach(match => {
     const variable = match[1];
@@ -25,18 +25,18 @@ export function validateJsonWithVariables(text: string): {
       const lines = text.substring(0, startOffset).split('\n');
       const line = lines.length;
       const column = lines[lines.length - 1].length + 1;
-      
+
       errors.push({
         message: `Variável mal formatada: {{${variable}}}`,
         line,
         column,
         startOffset,
-        endOffset
+        endOffset,
       });
     }
     replaced = replaced.replace(match[0], '0');
   });
-  
+
   // Valida JSON
   try {
     JSON.parse(replaced);
@@ -44,7 +44,7 @@ export function validateJsonWithVariables(text: string): {
     const errorMsg = e?.message || 'Erro de sintaxe';
     let line = 1;
     let column = 1;
-    
+
     // Tenta extrair posição do erro do JSON
     const posMatch = errorMsg.match(/at position (\d+)/);
     if (posMatch) {
@@ -53,14 +53,14 @@ export function validateJsonWithVariables(text: string): {
       line = lines.length;
       column = lines[lines.length - 1].length + 1;
     }
-    
+
     errors.push({
       message: 'JSON inválido: ' + errorMsg,
       line,
-      column
+      column,
     });
   }
-  
+
   return {
     isValid: errors.length === 0,
     errors,
