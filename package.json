@@ -18,6 +18,7 @@
     "@monaco-editor/react": "^4.7.0",
     "monaco-editor": "^0.52.2",
     "next": "15.5.0",
+    "papaparse": "^5.5.3",
     "react": "19.1.0",
     "react-dom": "19.1.0"
   },
@@ -31,6 +32,7 @@
     "@testing-library/react": "^16.3.0",
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
     "@types/node": "^20",
+    "@types/papaparse": "^5.3.16",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^5.0.2",
