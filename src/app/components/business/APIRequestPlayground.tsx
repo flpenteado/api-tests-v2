@@ -80,7 +80,7 @@ export function APIRequestPlayground() {
     setError(null);
     setResponse(null);
     setDuration(null);
-    
+
     try {
       let payload: any = undefined;
       if (method !== 'GET' && method !== 'DELETE') {
@@ -99,18 +99,20 @@ export function APIRequestPlayground() {
             const isNumber = !isNaN(Number(value)) && isFinite(Number(value));
             return isNumber ? value : `"${value}"`;
           });
-          
+
           try {
             parsedBody = JSON.parse(bodyWithPlaceholders);
           } catch (secondParseError) {
-            throw new Error('Invalid JSON format after variable substitution. Please check your syntax and variable values.');
+            throw new Error(
+              'Invalid JSON format after variable substitution. Please check your syntax and variable values.'
+            );
           }
         }
-        
+
         // Substitui placeholders no payload
         payload = substitutePlaceholders(parsedBody, placeholderValues);
       }
-      
+
       const result = await RequestsService.executeOnce(payload, endpoint, method);
       setResponse(result.response);
       setStatus('success');
@@ -291,7 +293,7 @@ export function APIRequestPlayground() {
                 fontSize: 16,
               }}
             >
-              Click "Send" to make a request
+              Click &quot;Send&quot; to make a request
             </div>
           )}
 
@@ -362,18 +364,20 @@ export function APIRequestPlayground() {
             Variables
           </div>
           {/* Table Header */}
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: '1fr 1fr', 
-            gap: '0',
-            marginBottom: 4,
-            fontSize: 11,
-            fontWeight: 500,
-            color: '#999',
-            borderBottom: '1px solid #333',
-            paddingBottom: 6,
-            textAlign: 'left'
-          }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '0',
+              marginBottom: 4,
+              fontSize: 11,
+              fontWeight: 500,
+              color: '#999',
+              borderBottom: '1px solid #333',
+              paddingBottom: 6,
+              textAlign: 'left',
+            }}
+          >
             <div style={{ padding: '0 12px' }}>Variable</div>
             <div style={{ padding: '0 12px' }}>Value</div>
           </div>
@@ -381,36 +385,40 @@ export function APIRequestPlayground() {
           {/* Table Rows */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
             {placeholders.map((placeholder, index) => (
-              <div 
-                key={placeholder} 
-                style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: '1fr 1fr', 
+              <div
+                key={placeholder}
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
                   gap: '0',
                   background: 'transparent',
                   borderBottom: index < placeholders.length - 1 ? '1px solid #2a2a2a' : 'none',
-                  minHeight: 36
+                  minHeight: 36,
                 }}
               >
-                <div style={{
-                  background: 'transparent',
-                  padding: '8px 12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  fontSize: 11,
-                  color: '#ccc',
-                  fontFamily: 'Inter, sans-serif',
-                  fontWeight: 400,
-                  borderRight: '1px solid #2a2a2a'
-                }}>
+                <div
+                  style={{
+                    background: 'transparent',
+                    padding: '8px 12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    fontSize: 11,
+                    color: '#ccc',
+                    fontFamily: 'Inter, sans-serif',
+                    fontWeight: 400,
+                    borderRight: '1px solid #2a2a2a',
+                  }}
+                >
                   {placeholder}
                 </div>
-                <div style={{
-                  background: 'transparent',
-                  padding: '4px 0px',
-                  display: 'flex',
-                  alignItems: 'center'
-                }}>
+                <div
+                  style={{
+                    background: 'transparent',
+                    padding: '4px 0px',
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                >
                   <input
                     type="text"
                     value={placeholderValues[placeholder] || ''}

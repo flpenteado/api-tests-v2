@@ -5,7 +5,7 @@
  * Achata um objeto aninhado em um objeto plano com paths como chaves
  */
 export function flatten(obj: any, prefix = ''): Record<string, any> {
-  let out: Record<string, any> = {};
+  const out: Record<string, any> = {};
   for (const [key, value] of Object.entries(obj)) {
     const path = prefix ? `${prefix}.${key}` : key;
     if (value && typeof value === 'object' && !Array.isArray(value)) {
