@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Editor } from '@monaco-editor/react';
-import type * as MonacoEditorType from 'monaco-editor';
+import type * as MonacoTypes from 'monaco-editor';
 
 // Types
 import { formatJsonWithVariables } from '../../utils/jsonUtils';
@@ -15,7 +15,8 @@ interface JsonEditorProps {
 export function JsonEditor({ value, onChange, editable = true }: JsonEditorProps) {
   const [editorText, setEditorText] = useState(value);
   const [isEditorReady, setIsEditorReady] = useState(false);
-  const editorRef = useRef<MonacoEditorType.IStandaloneCodeEditor | null>(null);
+  const editorRef = useRef<MonacoTypes.editor.IStandaloneCodeEditor | null>(null);
+  const decorationsRef = useRef<string[]>([]);
 
   // Sync external value changes
   useEffect(() => {
@@ -51,10 +52,51 @@ export function JsonEditor({ value, onChange, editable = true }: JsonEditorProps
   }, []);
 
   // Editor reference after mount
-  const handleMount = useCallback((editor: MonacoEditorType.IStandaloneCodeEditor) => {
+  const applyDecorations = useCallback(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    const model = editor.getModel();
+    if (!model) return;
+
+    const text = model.getValue();
+    const regex = /\{\{([\w.-]+)\}\}/g;
+    const decorations: MonacoTypes.editor.IModelDeltaDecoration[] = [];
+    const g = text.matchAll(regex) as Iterable<RegExpMatchArray>;
+    for (const match of g) {
+      const start = match.index ?? 0;
+      const end = start + match[0].length;
+      const startPos = model.getPositionAt(start);
+      const endPos = model.getPositionAt(end);
+      const m: any = (typeof window !== 'undefined' && (window as any).monaco) || null;
+      if (!m) continue;
+      decorations.push({
+        range: new m.Range(startPos.lineNumber, startPos.column, endPos.lineNumber, endPos.column),
+        options: { inlineClassName: 'json-variable-highlight' },
+      });
+    }
+    decorationsRef.current = editor.deltaDecorations(decorationsRef.current, decorations);
+  }, []);
+
+  const handleMount = useCallback((editor: MonacoTypes.editor.IStandaloneCodeEditor) => {
     editorRef.current = editor;
     setIsEditorReady(true);
-  }, []);
+    // Apply once right after mount
+    applyDecorations();
+    // Re-apply when content changes inside Monaco (e.g., undo/redo not captured)
+    const disposable = editor.onDidChangeModelContent(() => applyDecorations());
+    return () => disposable.dispose();
+  }, [applyDecorations]);
+
+  // Highlight `{{variable}}` occurrences with inline decorations
+  useEffect(() => {
+    if (!isEditorReady) return;
+    applyDecorations();
+    return () => {
+      const editor = editorRef.current;
+      if (editor) editor.deltaDecorations(decorationsRef.current, []);
+      decorationsRef.current = [];
+    };
+  }, [editorText, isEditorReady, applyDecorations]);
 
   // Add CSS for variable highlighting
   useEffect(() => {

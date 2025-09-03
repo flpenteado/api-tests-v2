@@ -7,9 +7,9 @@ import { extractPlaceholders, substitutePlaceholders } from './utils/placeholder
 const DEFAULT_ENDPOINT = 'https://jsonplaceholder.typicode.com/posts';
 const DEFAULT_METHOD = 'POST';
 const DEFAULT_BODY = `{
-  "userId": "{{user_id}}",
-  "title": "{{post_title}}",
-  "body": "{{post_content}}"
+  "userId": 33,
+  "title": {{titulo}},
+  "body": {{conteudo}}
 }`;
 
 export default function AppPage() {
@@ -150,9 +150,6 @@ export default function AppPage() {
             <JsonEditor
               value={body}
               onChange={showRequestTree ? undefined : setBody}
-              selectedFields={selectedRequestFields}
-              onSelectField={handleSelectRequestField}
-              onAliasChange={handleRequestAliasChange}
               editable={!showRequestTree}
             />
           </div>
@@ -172,9 +169,6 @@ export default function AppPage() {
                   value={
                     typeof response.response === 'object' ? JSON.stringify(response.response) : '{}'
                   }
-                  selectedFields={selectedResponseFields}
-                  onSelectField={handleSelectResponseField}
-                  onAliasChange={handleResponseAliasChange}
                   editable={false}
                 />
               ) : (
@@ -217,9 +211,9 @@ export default function AppPage() {
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-[#181A20]">
-                    <th className="pb-1 text-left">Campo</th>
+                    <th className="pb-1 text-left">Field</th>
                     <th className="pb-1 text-left">Alias</th>
-                    <th className="pb-1 text-left">Valor</th>
+                    <th className="pb-1 text-left">Value</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -278,9 +272,9 @@ export default function AppPage() {
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-[#181A20]">
-                    <th className="pb-1 text-left">Campo</th>
+                    <th className="pb-1 text-left">Field</th>
                     <th className="pb-1 text-left">Alias</th>
-                    <th className="pb-1 text-left">Valor</th>
+                    <th className="pb-1 text-left">Value</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -290,7 +284,7 @@ export default function AppPage() {
                       <td className="py-1 pr-2">{f.alias}</td>
                       <td className="py-1">
                         {response && response.response && typeof response.response === 'object'
-                          ? (response.response[f.path] ?? '')
+                          ? ((response.response as any)[f.path] ?? '')
                           : ''}
                       </td>
                     </tr>

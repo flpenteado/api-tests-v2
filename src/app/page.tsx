@@ -10,14 +10,19 @@ import {
   AppRightSidebar,
   AppSidebar,
 } from './components/layout';
-import { extractPlaceholders, substitutePlaceholders } from './utils/placeholders';
+import {
+  VARIABLE_REGEX,
+  extractPlaceholders,
+  substitutePlaceholders,
+  substitutePlaceholdersInText,
+} from './utils/placeholders';
 
 const DEFAULT_ENDPOINT = 'https://jsonplaceholder.typicode.com/posts';
 const DEFAULT_METHOD = 'POST';
 const DEFAULT_BODY = `{
-  "userId": "{{user_id}}",
-  "title": "{{post_title}}",
-  "body": "{{post_content}}"
+  "userId": 33,
+  "title": {{titulo}},
+  "body": {{conteudo}}
 }`;
 
 export default function Home() {
@@ -38,16 +43,100 @@ export default function Home() {
   const [selectedResponseFields, setSelectedResponseFields] = useState<
     { path: string; alias: string }[]
   >([]);
+  const loadedDisplaySelectionsRef = React.useRef(false);
 
-  // Helper function to extract all fields from an object
+  // Load persisted Display selections (aliases) on mount
+  React.useEffect(() => {
+    try {
+      const req = localStorage.getItem('display.selectedRequestFields');
+      const res = localStorage.getItem('display.selectedResponseFields');
+      if (req) {
+        const parsed = JSON.parse(req);
+        if (Array.isArray(parsed)) {
+          setSelectedRequestFields(
+            parsed
+              .filter((x: any) => x && typeof x.path === 'string')
+              .map((x: any) => ({ path: x.path, alias: x.alias ?? '' }))
+          );
+        }
+      }
+      if (res) {
+        const parsed = JSON.parse(res);
+        if (Array.isArray(parsed)) {
+          setSelectedResponseFields(
+            parsed
+              .filter((x: any) => x && typeof x.path === 'string')
+              .map((x: any) => ({ path: x.path, alias: x.alias ?? '' }))
+          );
+        }
+      }
+      loadedDisplaySelectionsRef.current = true;
+    } catch {}
+  }, []);
+
+  // Clean up invalid selections when availableFields change
+  React.useEffect(() => {
+    if (!loadedDisplaySelectionsRef.current) return;
+    
+    setSelectedRequestFields(prev => 
+      prev.filter(field => availableRequestFields.includes(field.path))
+    );
+  }, [availableRequestFields.join('|')]);
+
+  React.useEffect(() => {
+    if (!loadedDisplaySelectionsRef.current) return;
+    
+    setSelectedResponseFields(prev => 
+      prev.filter(field => availableResponseFields.includes(field.path))
+    );
+  }, [availableResponseFields.join('|')]);
+
+  // Persist Display selections whenever they change
+  React.useEffect(() => {
+    try {
+      localStorage.setItem('display.selectedRequestFields', JSON.stringify(selectedRequestFields));
+    } catch {}
+  }, [selectedRequestFields]);
+  React.useEffect(() => {
+    try {
+      localStorage.setItem(
+        'display.selectedResponseFields',
+        JSON.stringify(selectedResponseFields)
+      );
+    } catch {}
+  }, [selectedResponseFields]);
+
+  // Helper function to extract all fields from an object, including array indices
   const extractAllFields = (obj: any, prefix = ''): string[] => {
     const fields: string[] = [];
-    if (!obj || typeof obj !== 'object') return fields;
+    if (obj === null || obj === undefined) return fields;
+
+    // If array at root
+    if (Array.isArray(obj)) {
+      obj.forEach((item, idx) => {
+        const itemPath = `${prefix}[${idx}]`;
+        fields.push(itemPath);
+        if (item && typeof item === 'object') {
+          fields.push(...extractAllFields(item, itemPath));
+        }
+      });
+      return fields;
+    }
+
+    if (typeof obj !== 'object') return fields;
 
     for (const [key, value] of Object.entries(obj)) {
       const fieldPath = prefix ? `${prefix}.${key}` : key;
       fields.push(fieldPath);
-      if (value && typeof value === 'object' && !Array.isArray(value)) {
+      if (Array.isArray(value)) {
+        value.forEach((item, idx) => {
+          const itemPath = `${fieldPath}[${idx}]`;
+          fields.push(itemPath);
+          if (item && typeof item === 'object') {
+            fields.push(...extractAllFields(item, itemPath));
+          }
+        });
+      } else if (value && typeof value === 'object') {
         fields.push(...extractAllFields(value, fieldPath));
       }
     }
@@ -102,50 +191,96 @@ export default function Home() {
     setPlaceholders(detectedPlaceholders);
   }, [detectedPlaceholders]);
 
-  // Atualiza campos disponíveis do request quando o body muda
+  // Atualiza campos disponíveis do request quando o body muda (com debounce)
   React.useEffect(() => {
-    try {
-      const parsed = JSON.parse(body);
-      if (parsed && typeof parsed === 'object') {
-        const allFields = extractAllFields(parsed);
-        setAvailableRequestFields(allFields);
-
-        // Auto-seleciona todos os campos na primeira vez
-        const newSelectedFields = allFields.map(path => ({ path, alias: '' }));
-        if (
-          newSelectedFields.length !== selectedRequestFields.length ||
-          !newSelectedFields.every(field => selectedRequestFields.some(f => f.path === field.path))
-        ) {
-          setSelectedRequestFields(newSelectedFields);
+    const timeoutId = setTimeout(() => {
+      try {
+        const parsed = JSON.parse(body);
+        if (parsed && typeof parsed === 'object') {
+          const allFields = extractAllFields(parsed);
+          setAvailableRequestFields(allFields);
+        } else if (body.trim() === '' || body.trim() === '{}') {
+          // Only clear if truly empty
+          setAvailableRequestFields([]);
         }
+        // Don't clear fields for temporary JSON syntax errors during editing
+      } catch (error) {
+        // Fallback: prefer original keys when mapping key: {{placeholder}}
+        const placeholderMatches = body.match(/\{\{([\w.-]+)\}\}/g) || [];
+        const placeholderNames = placeholderMatches.map(m => m.slice(2, -2));
+        // Extract keys heuristically
+        const keyRegex = /"([^"]+)"\s*:|\b([A-Za-z_][A-Za-z0-9_\-]*)\s*:/g;
+        const keyNames: string[] = [];
+        let m: RegExpExecArray | null;
+        while ((m = keyRegex.exec(body)) !== null) {
+          const k = m[1] || m[2];
+          if (k) keyNames.push(k);
+        }
+        // Map pairs "key": {{placeholder}}
+        const pairRegex = /"([\w.-]+)"\s*:\s*\{\{([\w.-]+)\}\}/g;
+        const keysFromPairs = new Set<string>();
+        const placeholdersInPairs = new Set<string>();
+        let mp: RegExpExecArray | null;
+        while ((mp = pairRegex.exec(body)) !== null) {
+          keysFromPairs.add(mp[1]);
+          placeholdersInPairs.add(mp[2]);
+        }
+        const uniq = (arr: string[]) => Array.from(new Set(arr));
+        const othersKeys = keyNames.filter(k => !keysFromPairs.has(k));
+        const remainingPlaceholders = placeholderNames.filter(p => !placeholdersInPairs.has(p));
+        const all = uniq([...Array.from(keysFromPairs), ...othersKeys, ...remainingPlaceholders]);
+        if (all.length > 0) {
+          setAvailableRequestFields(all);
+        } else if (body.trim() === '' || body.trim() === '{}') {
+          setAvailableRequestFields([]);
+        }
+        // otherwise keep current fields silently (user is typing)
       }
-    } catch {
-      // Invalid JSON, clear fields
-      setAvailableRequestFields([]);
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [body]);
+
+  // Auto-seleciona todos os campos disponíveis do request
+  React.useEffect(() => {
+    if (availableRequestFields.length > 0) {
+      if (!loadedDisplaySelectionsRef.current || selectedRequestFields.length === 0) {
+        const newSelectedFields = availableRequestFields.map(path => ({ path, alias: '' }));
+        setSelectedRequestFields(newSelectedFields);
+      }
+    }
+  }, [availableRequestFields, selectedRequestFields.length]);
+
+  // Fallback: auto-seleciona placeholders como campos de request quando não há JSON válido
+  React.useEffect(() => {
+    if (availableRequestFields.length === 0 && placeholders.length > 0) {
+      setSelectedRequestFields(placeholders.map(p => ({ path: p.name, alias: '' })));
+    }
+    if (availableRequestFields.length === 0 && placeholders.length === 0) {
       setSelectedRequestFields([]);
     }
-  }, [body]);
+  }, [availableRequestFields.length, placeholders]);
 
   // Atualiza campos disponíveis do response quando há uma resposta válida
   React.useEffect(() => {
     if (response && response.response && typeof response.response === 'object') {
       const allFields = extractAllFields(response.response);
       setAvailableResponseFields(allFields);
-
-      // Auto-seleciona todos os campos na primeira vez
-      const newSelectedFields = allFields.map(path => ({ path, alias: '' }));
-      if (
-        newSelectedFields.length !== selectedResponseFields.length ||
-        !newSelectedFields.every(field => selectedResponseFields.some(f => f.path === field.path))
-      ) {
-        setSelectedResponseFields(newSelectedFields);
-      }
     } else {
       // No valid response, clear fields
       setAvailableResponseFields([]);
-      setSelectedResponseFields([]);
     }
   }, [response]);
+
+  // Auto-seleciona todos os campos disponíveis do response
+  React.useEffect(() => {
+    if (availableResponseFields.length > 0 && selectedResponseFields.length === 0) {
+      const newSelectedFields = availableResponseFields.map(path => ({ path, alias: '' }));
+      setSelectedResponseFields(newSelectedFields);
+    } else if (availableResponseFields.length === 0 && selectedResponseFields.length > 0) {
+      // Keep existing selection (persisted) until a valid response arrives
+    }
+  }, [availableResponseFields, selectedResponseFields.length]);
 
   // Função para executar a requisição
   const handleSend = async () => {
@@ -156,19 +291,42 @@ export default function Home() {
       } catch {
         parsedBody = body;
       }
-      const bodyWithValues = substitutePlaceholders(parsedBody, placeholderValues);
+      let bodyWithValues: any;
+      if (typeof parsedBody === 'string') {
+        // Replace in full text with quote-awareness
+        const replaced = substitutePlaceholdersInText(parsedBody, placeholderValues);
+        // Clean any remaining placeholders to keep valid JSON
+        const cleaned = replaced.replace(VARIABLE_REGEX, (m, _k, offset) => {
+          const before = replaced[offset - 1];
+          const after = replaced[offset + m.length];
+          const isQuoted = before === '"' && after === '"';
+          return isQuoted ? '' : 'null';
+        });
+        try {
+          bodyWithValues = JSON.parse(cleaned);
+        } catch {
+          // As last resort, try parsing replaced directly (if it was valid already)
+          try {
+            bodyWithValues = JSON.parse(replaced);
+          } catch {
+            bodyWithValues = cleaned; // still send as string if not JSON
+          }
+        }
+      } else {
+        bodyWithValues = substitutePlaceholders(parsedBody, placeholderValues);
+      }
       const start = performance.now();
-      const res = await fetch(endpoint, {
-        method,
+      const res = await fetch('/api/proxy', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: method !== 'GET' ? JSON.stringify(bodyWithValues) : undefined,
+        body: JSON.stringify({ endpoint, method, body: bodyWithValues }),
       });
       const durationMs = Math.round(performance.now() - start);
-      const responseJson = await res.json();
+      const proxyJson = await res.json();
       setResponse({
-        status: res.status,
+        status: proxyJson.status,
         durationMs,
-        response: responseJson,
+        response: proxyJson.response,
       });
     } catch (err) {
       setResponse({
@@ -185,14 +343,10 @@ export default function Home() {
   };
 
   // Handler para settings (placeholder)
-  const handleSettingsClick = () => {
-    console.log('Settings clicked');
-  };
+  const handleSettingsClick = () => {};
 
   // Handler para seleção de collection (placeholder)
-  const handleCollectionSelect = (collectionId: string) => {
-    console.log('Collection selected:', collectionId);
-  };
+  const handleCollectionSelect = (_collectionId: string) => {};
 
   return (
     <AppLayout
@@ -217,24 +371,20 @@ export default function Home() {
           onBodyChange={setBody}
           onSend={handleSend}
           response={response}
-        />
-      }
-      rightSidebar={
-        <AppRightSidebar
+          availableRequestFields={availableRequestFields}
+          availableResponseFields={availableResponseFields}
+          selectedRequestFields={selectedRequestFields}
+          selectedResponseFields={selectedResponseFields}
+          onSelectRequestField={handleSelectRequestField}
+          onRequestAliasChange={handleRequestAliasChange}
+          onSelectResponseField={handleSelectResponseField}
+          onResponseAliasChange={handleResponseAliasChange}
           placeholders={placeholders}
           placeholderValues={placeholderValues}
           onPlaceholderValueChange={handlePlaceholderValueChange}
-          selectedRequestFields={selectedRequestFields}
-          onSelectRequestField={handleSelectRequestField}
-          onRequestAliasChange={handleRequestAliasChange}
-          selectedResponseFields={selectedResponseFields}
-          onSelectResponseField={handleSelectResponseField}
-          onResponseAliasChange={handleResponseAliasChange}
-          availableRequestFields={availableRequestFields}
-          availableResponseFields={availableResponseFields}
-          response={response}
         />
       }
+      rightSidebar={null}
     />
   );
 }

@@ -8,6 +8,7 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ header, sidebar, mainContent, rightSidebar }: AppLayoutProps) {
+  const hasRight = Boolean(rightSidebar);
   return (
     <div className="main-grid bg-[#1a1a1a] text-white min-h-screen">
       {/* Header - spans full width */}
@@ -26,18 +27,21 @@ export function AppLayout({ header, sidebar, mainContent, rightSidebar }: AppLay
       </main>
 
       {/* Right sidebar */}
-      <aside className="grid-right-sidebar bg-[#252526] overflow-y-auto">
-        {rightSidebar}
-      </aside>
+      {hasRight && (
+        <aside className="grid-right-sidebar bg-[#252526] overflow-y-auto">
+          {rightSidebar}
+        </aside>
+      )}
 
       <style jsx>{`
         .main-grid {
           display: grid;
-          grid-template-columns: 250px 1fr 350px;
+          grid-template-columns: 250px 1fr ${hasRight ? '350px' : ''};
           grid-template-rows: auto 1fr;
           grid-template-areas:
-            'header header header'
-            'sidebar main right-sidebar';
+            ${hasRight
+              ? `'header header header'\n            'sidebar main right-sidebar'`
+              : `'header header'\n            'sidebar main'`};
           height: 100vh;
           gap: 1rem;
           padding: 1rem;
@@ -66,10 +70,7 @@ export function AppLayout({ header, sidebar, mainContent, rightSidebar }: AppLay
               'header header'
               'sidebar main';
           }
-
-          .grid-right-sidebar {
-            display: none;
-          }
+          ${hasRight ? `.grid-right-sidebar { display: none; }` : ''}
         }
 
         @media (max-width: 768px) {

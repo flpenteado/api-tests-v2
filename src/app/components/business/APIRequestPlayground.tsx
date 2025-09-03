@@ -9,9 +9,9 @@ import { extractPlaceholders, substitutePlaceholders } from '@/app/utils/placeho
 const DEFAULT_ENDPOINT = 'https://jsonplaceholder.typicode.com/posts';
 const DEFAULT_METHOD: HttpMethod = 'POST';
 const DEFAULT_BODY = `{
-  "userId": "{{user_id}}",
-  "title": "{{post_title}}",
-  "body": "{{post_content}}"
+  "userId": 33,
+  "title": {{titulo}},
+  "body": {{conteudo}}
 }`;
 
 export function APIRequestPlayground() {

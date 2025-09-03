@@ -36,7 +36,14 @@ export function extractPlaceholders(json: any): string[] {
 export function substitutePlaceholders(json: any, values: Record<string, any>): any {
   const replace = (obj: any): any => {
     if (typeof obj === 'string') {
-      return obj.replace(VARIABLE_REGEX, (_, key) =>
+      // If the whole string is a single placeholder, return the typed value directly
+      const singleMatch = obj.match(/^\{\{([\w.-]+)\}\}$/);
+      if (singleMatch) {
+        const key = singleMatch[1];
+        return key in values ? values[key] : obj;
+      }
+      // Otherwise, treat as a string template and stringify pieces
+      return obj.replace(VARIABLE_REGEX, (_m, key) =>
         key in values ? String(values[key]) : `{{${key}}}`
       );
     } else if (Array.isArray(obj)) {
@@ -51,4 +58,20 @@ export function substitutePlaceholders(json: any, values: Record<string, any>): 
     return obj;
   };
   return replace(json);
+}
+
+/**
+ * Substitui placeholders em um texto (documento inteiro) preservando tipos:
+ * - Se o placeholder estiver entre aspas, insere o valor como string bruta
+ * - Se estiver fora de aspas, usa JSON.stringify(valor) para manter números/objetos corretos
+ */
+export function substitutePlaceholdersInText(template: string, values: Record<string, any>): string {
+  return template.replace(VARIABLE_REGEX, (match, key, offset) => {
+    if (!(key in values)) return match;
+    const before = template[offset - 1];
+    const after = template[offset + match.length];
+    const isQuoted = before === '"' && after === '"';
+    const val = values[key];
+    return isQuoted ? String(val) : JSON.stringify(val);
+  });
 }
