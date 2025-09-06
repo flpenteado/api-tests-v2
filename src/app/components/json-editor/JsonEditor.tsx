@@ -23,7 +23,7 @@ export function JsonEditor({ value, onChange, editable = true }: JsonEditorProps
     if (value !== editorText) {
       setEditorText(value);
     }
-  }, [value]);
+  }, [value, editorText]);
 
   // Format JSON
   const handleFormat = useCallback(() => {
@@ -77,15 +77,18 @@ export function JsonEditor({ value, onChange, editable = true }: JsonEditorProps
     decorationsRef.current = editor.deltaDecorations(decorationsRef.current, decorations);
   }, []);
 
-  const handleMount = useCallback((editor: MonacoTypes.editor.IStandaloneCodeEditor) => {
-    editorRef.current = editor;
-    setIsEditorReady(true);
-    // Apply once right after mount
-    applyDecorations();
-    // Re-apply when content changes inside Monaco (e.g., undo/redo not captured)
-    const disposable = editor.onDidChangeModelContent(() => applyDecorations());
-    return () => disposable.dispose();
-  }, [applyDecorations]);
+  const handleMount = useCallback(
+    (editor: MonacoTypes.editor.IStandaloneCodeEditor) => {
+      editorRef.current = editor;
+      setIsEditorReady(true);
+      // Apply once right after mount
+      applyDecorations();
+      // Re-apply when content changes inside Monaco (e.g., undo/redo not captured)
+      const disposable = editor.onDidChangeModelContent(() => applyDecorations());
+      return () => disposable.dispose();
+    },
+    [applyDecorations]
+  );
 
   // Highlight `{{variable}}` occurrences with inline decorations
   useEffect(() => {
@@ -175,10 +178,10 @@ export function JsonEditor({ value, onChange, editable = true }: JsonEditorProps
           glyphMargin: false,
           scrollBeyondLastLine: false,
           wordWrap: 'on',
-          fontSize: 14,
+          fontSize: 12,
           fontFamily:
             'ui-monospace, SFMono-Regular, Menlo, Consolas, Monaco, Liberation Mono, monospace',
-          lineHeight: 20,
+          lineHeight: 18,
         }}
       />
     </div>

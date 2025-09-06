@@ -1,125 +1,79 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 
-import { ApiResponse, PlaceholderMeta } from '../types/modularApiTesting';
-import {
-  AppHeader,
-  AppLayout,
-  AppMainContent,
-  AppRightSidebar,
-  AppSidebar,
-} from './components/layout';
+import { AppHeader, AppLayout, AppMainContent, AppSidebar } from './components/layout';
 import {
   VARIABLE_REGEX,
   extractPlaceholders,
   substitutePlaceholders,
   substitutePlaceholdersInText,
 } from './utils/placeholders';
-
-const DEFAULT_ENDPOINT = 'https://jsonplaceholder.typicode.com/posts';
-const DEFAULT_METHOD = 'POST';
-const DEFAULT_BODY = `{
-  "userId": 33,
-  "title": {{titulo}},
-  "body": {{conteudo}}
-}`;
+import { useAppStore } from './state/StoreProvider';
 
 export default function Home() {
-  // Estado principal - movido do AppPage.tsx
-  const [endpoint, setEndpoint] = useState(DEFAULT_ENDPOINT);
-  const [method, setMethod] = useState(DEFAULT_METHOD);
-  const [body, setBody] = useState(DEFAULT_BODY);
-  const [response, setResponse] = useState<ApiResponse | null>(null);
-  const [placeholders, setPlaceholders] = useState<PlaceholderMeta[]>([]);
-  const [placeholderValues, setPlaceholderValues] = useState<Record<string, string | number>>({});
+  // Estado global via Zustand
+  const endpoint = useAppStore(s => s.endpoint);
+  const method = useAppStore(s => s.method);
+  const body = useAppStore(s => s.body);
+  const response = useAppStore(s => s.response);
+  const setResponse = useAppStore(s => s.setResponse);
+  const placeholders = useAppStore(s => s.placeholders);
+  const setPlaceholders = useAppStore(s => s.setPlaceholders);
+  const placeholderValues = useAppStore(s => s.placeholderValues);
 
-  // Estado para campos disponíveis e selecionados
-  const [availableRequestFields, setAvailableRequestFields] = useState<string[]>([]);
-  const [availableResponseFields, setAvailableResponseFields] = useState<string[]>([]);
-  const [selectedRequestFields, setSelectedRequestFields] = useState<
-    { path: string; alias: string }[]
-  >([]);
-  const [selectedResponseFields, setSelectedResponseFields] = useState<
-    { path: string; alias: string }[]
-  >([]);
+  const availableRequestFields = useAppStore(s => s.availableRequestFields);
+  const setAvailableRequestFields = useAppStore(s => s.setAvailableRequestFields);
+  const availableResponseFields = useAppStore(s => s.availableResponseFields);
+  const setAvailableResponseFields = useAppStore(s => s.setAvailableResponseFields);
+  const setSelectedRequestFields = useAppStore(s => s.setSelectedRequestFields);
+  const selectedResponseFields = useAppStore(s => s.selectedResponseFields);
+  const setSelectedResponseFields = useAppStore(s => s.setSelectedResponseFields);
+
   const loadedDisplaySelectionsRef = React.useRef(false);
 
-  // Load persisted Display selections (aliases) on mount
+  // Início limpo (sem qualquer persistência local)
   React.useEffect(() => {
-    try {
-      const req = localStorage.getItem('display.selectedRequestFields');
-      const res = localStorage.getItem('display.selectedResponseFields');
-      if (req) {
-        const parsed = JSON.parse(req);
-        if (Array.isArray(parsed)) {
-          setSelectedRequestFields(
-            parsed
-              .filter((x: any) => x && typeof x.path === 'string')
-              .map((x: any) => ({ path: x.path, alias: x.alias ?? '' }))
-          );
-        }
-      }
-      if (res) {
-        const parsed = JSON.parse(res);
-        if (Array.isArray(parsed)) {
-          setSelectedResponseFields(
-            parsed
-              .filter((x: any) => x && typeof x.path === 'string')
-              .map((x: any) => ({ path: x.path, alias: x.alias ?? '' }))
-          );
-        }
-      }
-      loadedDisplaySelectionsRef.current = true;
-    } catch {}
+    loadedDisplaySelectionsRef.current = true;
   }, []);
 
-  // Clean up invalid selections when availableFields change
-  React.useEffect(() => {
-    if (!loadedDisplaySelectionsRef.current) return;
-    
-    setSelectedRequestFields(prev => 
-      prev.filter(field => availableRequestFields.includes(field.path))
-    );
-  }, [availableRequestFields.join('|')]);
+  // Clean up invalid selections when availableFields change - disabled to prevent conflicts
+  // React.useEffect(() => {
+  //   if (!loadedDisplaySelectionsRef.current) return;
+  //   setSelectedRequestFields(prev =>
+  //     prev.filter(field => availableRequestFields.includes(field.path))
+  //   );
+  // }, [availableRequestFields.join('|')]);
 
   React.useEffect(() => {
     if (!loadedDisplaySelectionsRef.current) return;
-    
-    setSelectedResponseFields(prev => 
-      prev.filter(field => availableResponseFields.includes(field.path))
-    );
-  }, [availableResponseFields.join('|')]);
+    setSelectedResponseFields(prev => prev.filter(field => availableResponseFields.includes(field.path)));
+  }, [availableResponseFields, setSelectedResponseFields]);
 
-  // Persist Display selections whenever they change
-  React.useEffect(() => {
-    try {
-      localStorage.setItem('display.selectedRequestFields', JSON.stringify(selectedRequestFields));
-    } catch {}
-  }, [selectedRequestFields]);
-  React.useEffect(() => {
-    try {
-      localStorage.setItem(
-        'display.selectedResponseFields',
-        JSON.stringify(selectedResponseFields)
-      );
-    } catch {}
-  }, [selectedResponseFields]);
 
   // Helper function to extract all fields from an object, including array indices
-  const extractAllFields = (obj: any, prefix = ''): string[] => {
+  // Arrays with items will have their individual items exposed, not the array itself
+  const extractAllFields = React.useCallback((obj: any, prefix = ''): string[] => {
     const fields: string[] = [];
     if (obj === null || obj === undefined) return fields;
 
     // If array at root
     if (Array.isArray(obj)) {
-      obj.forEach((item, idx) => {
-        const itemPath = `${prefix}[${idx}]`;
-        fields.push(itemPath);
-        if (item && typeof item === 'object') {
-          fields.push(...extractAllFields(item, itemPath));
-        }
-      });
+      if (obj.length === 0) {
+        // Empty array - include the array path itself
+        fields.push(prefix || '[]');
+      } else {
+        // Non-empty array - include individual items, not the array
+        obj.forEach((item, idx) => {
+          const itemPath = `${prefix}[${idx}]`;
+          if (item && typeof item === 'object') {
+            fields.push(...extractAllFields(item, itemPath));
+          } else {
+            // Primitive value in array
+            fields.push(itemPath);
+          }
+        });
+      }
       return fields;
     }
 
@@ -127,53 +81,33 @@ export default function Home() {
 
     for (const [key, value] of Object.entries(obj)) {
       const fieldPath = prefix ? `${prefix}.${key}` : key;
-      fields.push(fieldPath);
+
       if (Array.isArray(value)) {
-        value.forEach((item, idx) => {
-          const itemPath = `${fieldPath}[${idx}]`;
-          fields.push(itemPath);
-          if (item && typeof item === 'object') {
-            fields.push(...extractAllFields(item, itemPath));
-          }
-        });
+        if (value.length === 0) {
+          // Empty array - include the array field itself
+          fields.push(fieldPath);
+        } else {
+          // Non-empty array - DON'T include the array field, only individual items
+          value.forEach((item, idx) => {
+            const itemPath = `${fieldPath}[${idx}]`;
+            if (item && typeof item === 'object') {
+              fields.push(...extractAllFields(item, itemPath));
+            } else {
+              // Primitive value in array
+              fields.push(itemPath);
+            }
+          });
+        }
       } else if (value && typeof value === 'object') {
         fields.push(...extractAllFields(value, fieldPath));
+      } else {
+        // Primitive value
+        fields.push(fieldPath);
       }
     }
     return fields;
-  };
+  }, []);
 
-  // Handlers para seleção e alias de campos do request
-  const handleSelectRequestField = (path: string) => {
-    setSelectedRequestFields(fields => {
-      const isSelected = fields.some(f => f.path === path);
-      if (isSelected) {
-        return fields.filter(f => f.path !== path);
-      } else {
-        return [...fields, { path, alias: '' }];
-      }
-    });
-  };
-
-  const handleRequestAliasChange = (path: string, alias: string) => {
-    setSelectedRequestFields(fields => fields.map(f => (f.path === path ? { ...f, alias } : f)));
-  };
-
-  // Handlers para seleção e alias de campos do response
-  const handleSelectResponseField = (path: string) => {
-    setSelectedResponseFields(fields => {
-      const isSelected = fields.some(f => f.path === path);
-      if (isSelected) {
-        return fields.filter(f => f.path !== path);
-      } else {
-        return [...fields, { path, alias: '' }];
-      }
-    });
-  };
-
-  const handleResponseAliasChange = (path: string, alias: string) => {
-    setSelectedResponseFields(fields => fields.map(f => (f.path === path ? { ...f, alias } : f)));
-  };
 
   // Extrai placeholders do body
   const detectedPlaceholders = useMemo(() => {
@@ -189,22 +123,53 @@ export default function Home() {
   // Sincroniza placeholders detectados
   React.useEffect(() => {
     setPlaceholders(detectedPlaceholders);
-  }, [detectedPlaceholders]);
+  }, [detectedPlaceholders, setPlaceholders]);
 
   // Atualiza campos disponíveis do request quando o body muda (com debounce)
   React.useEffect(() => {
     const timeoutId = setTimeout(() => {
       try {
-        const parsed = JSON.parse(body);
+        // Resolve placeholders in the body text before parsing so that
+        // JSON structure remains valid even when placeholders are unquoted
+        const resolvedText = substitutePlaceholdersInText(body, placeholderValues);
+        // Clean any remaining placeholders to keep JSON parseable
+        const cleaned = resolvedText.replace(VARIABLE_REGEX, (m, _k, offset) => {
+          const before = resolvedText[offset - 1];
+          const after = resolvedText[offset + m.length];
+          const isQuoted = before === '"' && after === '"';
+          return isQuoted ? '' : 'null';
+        });
+        const parsed = JSON.parse(cleaned);
         if (parsed && typeof parsed === 'object') {
           const allFields = extractAllFields(parsed);
-          setAvailableRequestFields(allFields);
+
+          // Filter out array fields explicitly to ensure they don't appear
+          const filteredFields = allFields.filter(field => {
+            try {
+              // Navigate to the field value to check if it's an array
+              const parts = field.split(/[\.\[\]]+/).filter(Boolean);
+              let current = parsed;
+              for (const part of parts) {
+                if (current && typeof current === 'object') {
+                  current = current[isNaN(Number(part)) ? part : Number(part)];
+                } else {
+                  return true; // Can't navigate, keep the field
+                }
+              }
+              // If current is an array, exclude this field
+              return !Array.isArray(current);
+            } catch {
+              return true; // On error, keep the field
+            }
+          });
+
+          setAvailableRequestFields(filteredFields);
         } else if (body.trim() === '' || body.trim() === '{}') {
           // Only clear if truly empty
           setAvailableRequestFields([]);
         }
         // Don't clear fields for temporary JSON syntax errors during editing
-      } catch (error) {
+      } catch {
         // Fallback: prefer original keys when mapping key: {{placeholder}}
         const placeholderMatches = body.match(/\{\{([\w.-]+)\}\}/g) || [];
         const placeholderNames = placeholderMatches.map(m => m.slice(2, -2));
@@ -239,17 +204,16 @@ export default function Home() {
     }, 300); // 300ms debounce
 
     return () => clearTimeout(timeoutId);
-  }, [body]);
+  }, [body, placeholderValues, setAvailableRequestFields, extractAllFields]);
 
   // Auto-seleciona todos os campos disponíveis do request
   React.useEffect(() => {
     if (availableRequestFields.length > 0) {
-      if (!loadedDisplaySelectionsRef.current || selectedRequestFields.length === 0) {
-        const newSelectedFields = availableRequestFields.map(path => ({ path, alias: '' }));
-        setSelectedRequestFields(newSelectedFields);
-      }
+      // Sempre selecionar todos os campos disponíveis, independente das condições anteriores
+      const newSelectedFields = availableRequestFields.map(path => ({ path, alias: '' }));
+      setSelectedRequestFields(newSelectedFields);
     }
-  }, [availableRequestFields, selectedRequestFields.length]);
+  }, [availableRequestFields, setSelectedRequestFields]);
 
   // Fallback: auto-seleciona placeholders como campos de request quando não há JSON válido
   React.useEffect(() => {
@@ -259,7 +223,7 @@ export default function Home() {
     if (availableRequestFields.length === 0 && placeholders.length === 0) {
       setSelectedRequestFields([]);
     }
-  }, [availableRequestFields.length, placeholders]);
+  }, [availableRequestFields.length, placeholders, setSelectedRequestFields]);
 
   // Atualiza campos disponíveis do response quando há uma resposta válida
   React.useEffect(() => {
@@ -270,7 +234,7 @@ export default function Home() {
       // No valid response, clear fields
       setAvailableResponseFields([]);
     }
-  }, [response]);
+  }, [response, setAvailableResponseFields, extractAllFields]);
 
   // Auto-seleciona todos os campos disponíveis do response
   React.useEffect(() => {
@@ -280,7 +244,7 @@ export default function Home() {
     } else if (availableResponseFields.length === 0 && selectedResponseFields.length > 0) {
       // Keep existing selection (persisted) until a valid response arrives
     }
-  }, [availableResponseFields, selectedResponseFields.length]);
+  }, [availableResponseFields, selectedResponseFields.length, setSelectedResponseFields]);
 
   // Função para executar a requisição
   const handleSend = async () => {
@@ -337,16 +301,12 @@ export default function Home() {
     }
   };
 
-  // Handler para alteração de valores de placeholder
-  const handlePlaceholderValueChange = (name: string, value: string) => {
-    setPlaceholderValues(prev => ({ ...prev, [name]: value }));
-  };
 
   // Handler para settings (placeholder)
   const handleSettingsClick = () => {};
 
   // Handler para seleção de collection (placeholder)
-  const handleCollectionSelect = (_collectionId: string) => {};
+  const handleCollectionSelect = () => {};
 
   return (
     <AppLayout
@@ -362,27 +322,7 @@ export default function Home() {
         />
       }
       mainContent={
-        <AppMainContent
-          endpoint={endpoint}
-          method={method}
-          body={body}
-          onEndpointChange={setEndpoint}
-          onMethodChange={setMethod}
-          onBodyChange={setBody}
-          onSend={handleSend}
-          response={response}
-          availableRequestFields={availableRequestFields}
-          availableResponseFields={availableResponseFields}
-          selectedRequestFields={selectedRequestFields}
-          selectedResponseFields={selectedResponseFields}
-          onSelectRequestField={handleSelectRequestField}
-          onRequestAliasChange={handleRequestAliasChange}
-          onSelectResponseField={handleSelectResponseField}
-          onResponseAliasChange={handleResponseAliasChange}
-          placeholders={placeholders}
-          placeholderValues={placeholderValues}
-          onPlaceholderValueChange={handlePlaceholderValueChange}
-        />
+        <AppMainContent onSend={handleSend} />
       }
       rightSidebar={null}
     />

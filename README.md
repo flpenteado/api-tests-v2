@@ -44,6 +44,33 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 - **Documentation**: Storybook
 - **Package Manager**: pnpm
 
+## State Management (Zustand)
+
+- O estado global é gerenciado com Zustand, exposto via um Provider baseado em Context: `src/app/state/StoreProvider.tsx`.
+- A store principal fica em `src/app/state/appStore.ts` e mantém:
+  - request: endpoint, method, body
+  - response: último resultado (status, durationMs, response)
+  - placeholders: lista e valores
+  - display: campos disponíveis/selecionados para request/response
+- Não há qualquer persistência em localStorage. Todo estado é volátil (em memória) no cliente. Isso prepara o projeto para persistência futura no backend/banco de dados.
+- Componentes consumidores podem acessar o estado via `useAppStore(selector)`.
+
+Integração:
+- O Provider é incluído no layout global: `src/app/layout.tsx`.
+- A página principal (`src/app/page.tsx`) e componentes como `AppMainContent` leem e escrevem diretamente na store.
+
+## Notas de Migração (remoção de localStorage)
+
+- Toda a persistência anterior em `localStorage` foi removida. Preferências como aba ativa e largura do painel agora são apenas estados locais e não persistem entre recargas (comportamento intencional).
+- Classes/serviços legados de persistência local foram descontinuados:
+  - `src/app/state/requestsStore.ts` (substituído por Zustand) — arquivo mantido como stub vazio.
+  - `src/app/services/RequestsService.ts` (execução direta substituída por `/api/proxy`) — arquivo mantido como stub vazio.
+- Serviços utilitários como `CsvService` foram atualizados para não depender desses artefatos.
+
+Próximos passos para backend:
+- Introduzir endpoints no backend para salvar/recuperar coleções, execuções (RequestRecord) e preferências de display.
+- Adicionar uma camada de sincronização no frontend que carrega/salva o estado via API (substituindo o estado volátil por hidratação/controlada vinda do servidor).
+
 ## Development Workflow
 
 This project follows the spec-workflow pattern. See `CLAUDE.md` for detailed development guidelines and AI assistance instructions.

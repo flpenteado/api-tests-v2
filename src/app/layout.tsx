@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 
 import './globals.css';
+import { StoreProvider } from './state/StoreProvider';
 
 const inter = Inter({
   variable: '--font-inter',
@@ -22,7 +23,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.variable} font-sans antialiased`}>{children}</body>
+      <body className={`${inter.variable} font-sans antialiased`}>
+        <StoreProvider>{children}</StoreProvider>
+      </body>
     </html>
   );
 }

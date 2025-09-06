@@ -3,8 +3,7 @@
 import Papa from 'papaparse';
 import type { ParseResult } from 'papaparse';
 
-import { RequestRecord } from '../../types/businessTesting';
-import { HttpMethod, RequestsService } from './RequestsService';
+import { HttpMethod } from '../../types/modularApiTesting';
 
 export class CsvService {
   /**
@@ -43,8 +42,15 @@ export class CsvService {
     const results: { row: any; result: any; error?: any }[] = [];
     for (const row of rows) {
       try {
-        const result = await RequestsService.executeOnce(row, endpoint, method);
-        results.push({ row, result });
+        const start = performance.now();
+        const res = await fetch('/api/proxy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint, method, body: row }),
+        });
+        const durationMs = Math.round(performance.now() - start);
+        const json = await res.json();
+        results.push({ row, result: { ...json, durationMs } });
       } catch (error) {
         results.push({ row, result: null, error });
       }
