@@ -65,7 +65,10 @@ export function substitutePlaceholders(json: any, values: Record<string, any>): 
  * - Se o placeholder estiver entre aspas, insere o valor como string bruta
  * - Se estiver fora de aspas, usa JSON.stringify(valor) para manter números/objetos corretos
  */
-export function substitutePlaceholdersInText(template: string, values: Record<string, any>): string {
+export function substitutePlaceholdersInText(
+  template: string,
+  values: Record<string, any>
+): string {
   return template.replace(VARIABLE_REGEX, (match, key, offset) => {
     if (!(key in values)) return match;
     const before = template[offset - 1];

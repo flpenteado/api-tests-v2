@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
       },
       {
         status: 200,
-      },
+      }
     );
   } catch (err: any) {
     return NextResponse.json(
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
         status: 0,
         response: { error: String(err) },
       },
-      { status: 200 },
+      { status: 200 }
     );
   }
 }

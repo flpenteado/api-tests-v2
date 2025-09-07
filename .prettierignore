@@ -52,9 +52,6 @@ package-lock.json
 # Generated types
 next-env.d.ts
 
-# Storybook
-.storybook/
-storybook-static/
 
 # Public assets that shouldn't be formatted
 public/

@@ -3,13 +3,13 @@
 import React, { useMemo } from 'react';
 
 import { AppHeader, AppLayout, AppMainContent, AppSidebar } from './components/layout';
+import { useAppStore } from './state/StoreProvider';
 import {
   VARIABLE_REGEX,
   extractPlaceholders,
   substitutePlaceholders,
   substitutePlaceholdersInText,
 } from './utils/placeholders';
-import { useAppStore } from './state/StoreProvider';
 
 export default function Home() {
   // Estado global via Zustand
@@ -47,9 +47,10 @@ export default function Home() {
 
   React.useEffect(() => {
     if (!loadedDisplaySelectionsRef.current) return;
-    setSelectedResponseFields(prev => prev.filter(field => availableResponseFields.includes(field.path)));
+    setSelectedResponseFields(prev =>
+      prev.filter(field => availableResponseFields.includes(field.path))
+    );
   }, [availableResponseFields, setSelectedResponseFields]);
-
 
   // Helper function to extract all fields from an object, including array indices
   // Arrays with items will have their individual items exposed, not the array itself
@@ -107,7 +108,6 @@ export default function Home() {
     }
     return fields;
   }, []);
-
 
   // Extrai placeholders do body
   const detectedPlaceholders = useMemo(() => {
@@ -301,7 +301,6 @@ export default function Home() {
     }
   };
 
-
   // Handler para settings (placeholder)
   const handleSettingsClick = () => {};
 
@@ -321,9 +320,7 @@ export default function Home() {
           userEmail="user@example.com"
         />
       }
-      mainContent={
-        <AppMainContent onSend={handleSend} />
-      }
+      mainContent={<AppMainContent onSend={handleSend} />}
       rightSidebar={null}
     />
   );

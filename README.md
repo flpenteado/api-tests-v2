@@ -33,7 +33,6 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 - `pnpm start` - Start production server
 - `pnpm lint` - Run ESLint
 - `pnpm test` - Run tests with Vitest
-- `pnpm storybook` - Start Storybook for component development
 
 ## Architecture
 
@@ -41,7 +40,6 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 - **Styling**: Tailwind CSS with custom design system
 - **Editor**: Monaco Editor for JSON editing
 - **Testing**: Vitest + Testing Library
-- **Documentation**: Storybook
 - **Package Manager**: pnpm
 
 ## State Management (Zustand)
@@ -56,6 +54,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 - Componentes consumidores podem acessar o estado via `useAppStore(selector)`.
 
 Integração:
+
 - O Provider é incluído no layout global: `src/app/layout.tsx`.
 - A página principal (`src/app/page.tsx`) e componentes como `AppMainContent` leem e escrevem diretamente na store.
 
@@ -68,6 +67,7 @@ Integração:
 - Serviços utilitários como `CsvService` foram atualizados para não depender desses artefatos.
 
 Próximos passos para backend:
+
 - Introduzir endpoints no backend para salvar/recuperar coleções, execuções (RequestRecord) e preferências de display.
 - Adicionar uma camada de sincronização no frontend que carrega/salva o estado via API (substituindo o estado volátil por hidratação/controlada vinda do servidor).
 

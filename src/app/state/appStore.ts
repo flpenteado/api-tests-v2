@@ -1,10 +1,9 @@
-import { createStore, type StoreApi } from 'zustand';
+import { type StoreApi, createStore } from 'zustand';
 
 import type { ApiResponse, PlaceholderMeta } from '../../types/modularApiTesting';
+import type { HttpMethod } from '../../types/modularApiTesting';
 
 export type AliasField = { path: string; alias: string };
-
-import type { HttpMethod } from '../../types/modularApiTesting';
 
 export interface AppState {
   endpoint: string;
@@ -34,12 +33,8 @@ export interface AppActions {
   setAvailableRequestFields: (fields: string[]) => void;
   setAvailableResponseFields: (fields: string[]) => void;
 
-  setSelectedRequestFields: (
-    next: AliasField[] | ((prev: AliasField[]) => AliasField[])
-  ) => void;
-  setSelectedResponseFields: (
-    next: AliasField[] | ((prev: AliasField[]) => AliasField[])
-  ) => void;
+  setSelectedRequestFields: (next: AliasField[] | ((prev: AliasField[]) => AliasField[])) => void;
+  setSelectedResponseFields: (next: AliasField[] | ((prev: AliasField[]) => AliasField[])) => void;
 }
 
 export type AppStore = StoreApi<AppState & AppActions>;
@@ -62,7 +57,7 @@ const DEFAULT_BODY = `{
 }`;
 
 export function createAppStore(initial?: Partial<AppState>): AppStore {
-  return createStore<AppState & AppActions>((set) => ({
+  return createStore<AppState & AppActions>(set => ({
     // State
     endpoint: initial?.endpoint ?? DEFAULT_ENDPOINT,
     method: initial?.method ?? DEFAULT_METHOD,
@@ -94,13 +89,17 @@ export function createAppStore(initial?: Partial<AppState>): AppStore {
     setSelectedRequestFields: next =>
       set(state => ({
         selectedRequestFields:
-          typeof next === 'function' ? (next as (prev: AliasField[]) => AliasField[])(state.selectedRequestFields) : next,
+          typeof next === 'function'
+            ? (next as (prev: AliasField[]) => AliasField[])(state.selectedRequestFields)
+            : next,
       })),
 
     setSelectedResponseFields: next =>
       set(state => ({
         selectedResponseFields:
-          typeof next === 'function' ? (next as (prev: AliasField[]) => AliasField[])(state.selectedResponseFields) : next,
+          typeof next === 'function'
+            ? (next as (prev: AliasField[]) => AliasField[])(state.selectedResponseFields)
+            : next,
       })),
   }));
 }

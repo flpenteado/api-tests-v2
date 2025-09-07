@@ -1,5 +1,4 @@
 import { FlatCompat } from '@eslint/eslintrc';
-import storybook from 'eslint-plugin-storybook';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -20,7 +19,6 @@ const eslintConfig = [
       '@typescript-eslint/no-explicit-any': 'off',
     },
   },
-  ...storybook.configs['flat/recommended'],
 ];
 
 export default eslintConfig;

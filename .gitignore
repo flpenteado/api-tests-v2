@@ -1,10 +1,6 @@
 node_modules/
 .claude
 .next
-*storybook.log
-storybook-static
-.storybook
-.spec-workflow
 .zed
 .vscode
 mcp.json
@@ -12,3 +8,7 @@ mcp.json
 CLAUDE.md
 .gemini
 tsconfig.tsbuildinfo
+/memory
+/scripts
+/templates
+.playwright-mcp

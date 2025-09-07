@@ -2,6 +2,7 @@ import React from 'react';
 
 import Papa from 'papaparse';
 
+import { useAppStore } from '@/app/state/StoreProvider';
 import {
   VARIABLE_REGEX,
   substitutePlaceholders,
@@ -10,7 +11,6 @@ import {
 
 import type { HttpMethod } from '../../../types/modularApiTesting';
 import { JsonEditor } from '../json-editor/JsonEditor';
-import { useAppStore } from '@/app/state/StoreProvider';
 
 // Helper function to extract value at a specific path from an object
 const getValueAtPath = (obj: any, path: string): any => {
@@ -139,7 +139,7 @@ export function AppMainContent({ onSend }: AppMainContentProps) {
                     <select
                       className="rounded border border-[#333] bg-[#252526] px-3 py-2 font-bold text-white focus:border-[#00E091] focus:outline-none"
                       value={method}
-onChange={e => setMethod(e.target.value as HttpMethod)}
+                      onChange={e => setMethod(e.target.value as HttpMethod)}
                     >
                       <option value="GET">GET</option>
                       <option value="POST">POST</option>
@@ -152,7 +152,7 @@ onChange={e => setMethod(e.target.value as HttpMethod)}
                       type="text"
                       className="flex-1 rounded border border-[#333] bg-[#252526] px-3 py-2 text-white focus:border-[#00E091] focus:outline-none"
                       value={endpoint}
-onChange={e => setEndpoint(e.target.value)}
+                      onChange={e => setEndpoint(e.target.value)}
                       placeholder="Enter request URL..."
                     />
 
@@ -166,7 +166,7 @@ onChange={e => setEndpoint(e.target.value)}
 
                   <h3 className="mb-2 flex-shrink-0 font-semibold text-white">Request</h3>
                   <div className="max-h-[300px] min-h-[160px] flex-shrink-0 overflow-auto rounded border border-[#333] bg-[#1e1e1e]">
-<JsonEditor value={body} onChange={setBody} editable={true} />
+                    <JsonEditor value={body} onChange={setBody} editable={true} />
                   </div>
                   <div className="flex min-h-0 min-h-[200px] flex-1 flex-col">
                     <h3 className="mb-2 flex-shrink-0 font-semibold text-white">Response</h3>
@@ -240,7 +240,7 @@ onChange={e => setEndpoint(e.target.value)}
                               <input
                                 className="w-full rounded border border-[#333] bg-[#252526] px-1 py-0.5 text-xs text-white focus:border-[#00E091] focus:outline-none"
                                 value={placeholderValues[p.name] ?? ''}
-onChange={e => setPlaceholderValue(p.name, e.target.value)}
+                                onChange={e => setPlaceholderValue(p.name, e.target.value)}
                                 placeholder="Enter value..."
                               />
                             </td>
@@ -289,12 +289,18 @@ onChange={e => setPlaceholderValue(p.name, e.target.value)}
                             const toggleSelect = () => {
                               setSelectedRequestFields(prev => {
                                 const exists = prev.some(f => f.path === fieldPath);
-                                return exists ? prev.filter(f => f.path !== fieldPath) : [...prev, { path: fieldPath, alias: '' }];
+                                return exists
+                                  ? prev.filter(f => f.path !== fieldPath)
+                                  : [...prev, { path: fieldPath, alias: '' }];
                               });
                             };
 
                             const changeAlias = (aliasValue: string) => {
-                              setSelectedRequestFields(prev => prev.map(f => (f.path === fieldPath ? { ...f, alias: aliasValue } : f)));
+                              setSelectedRequestFields(prev =>
+                                prev.map(f =>
+                                  f.path === fieldPath ? { ...f, alias: aliasValue } : f
+                                )
+                              );
                             };
 
                             return (
@@ -306,7 +312,7 @@ onChange={e => setPlaceholderValue(p.name, e.target.value)}
                                   <input
                                     type="checkbox"
                                     checked={isSelected}
-onChange={toggleSelect}
+                                    onChange={toggleSelect}
                                     className="h-4 w-4 rounded border-[#333] bg-[#252526] text-[#00E091] focus:ring-2 focus:ring-[#00E091]"
                                   />
                                 </td>
@@ -349,7 +355,8 @@ onChange={toggleSelect}
                                           fieldPath
                                         );
                                         const val = (placeholderValues as any)[fieldPath];
-                                        const hasValue = hasKey && val !== '' && val !== undefined && val !== null;
+                                        const hasValue =
+                                          hasKey && val !== '' && val !== undefined && val !== null;
                                         if (hasValue) {
                                           const formatted = formatValueSubtly(val);
                                           if (formatted) {
@@ -361,7 +368,9 @@ onChange={toggleSelect}
                                           }
                                         } else {
                                           return (
-                                            <span className="mt-0.5 text-xs text-[#555]">no value</span>
+                                            <span className="mt-0.5 text-xs text-[#555]">
+                                              no value
+                                            </span>
                                           );
                                         }
                                       }
@@ -373,7 +382,7 @@ onChange={toggleSelect}
                                   <input
                                     className="w-full rounded border border-[#333] bg-[#252526] px-1 py-0.5 text-xs text-white focus:border-[#00E091] focus:outline-none"
                                     value={alias}
-onChange={e => changeAlias(e.target.value)}
+                                    onChange={e => changeAlias(e.target.value)}
                                     placeholder="alias..."
                                     disabled={!isSelected}
                                   />
@@ -410,12 +419,18 @@ onChange={e => changeAlias(e.target.value)}
                             const toggleSelect = () => {
                               setSelectedResponseFields(prev => {
                                 const exists = prev.some(f => f.path === fieldPath);
-                                return exists ? prev.filter(f => f.path !== fieldPath) : [...prev, { path: fieldPath, alias: '' }];
+                                return exists
+                                  ? prev.filter(f => f.path !== fieldPath)
+                                  : [...prev, { path: fieldPath, alias: '' }];
                               });
                             };
 
                             const changeAlias = (aliasValue: string) => {
-                              setSelectedResponseFields(prev => prev.map(f => (f.path === fieldPath ? { ...f, alias: aliasValue } : f)));
+                              setSelectedResponseFields(prev =>
+                                prev.map(f =>
+                                  f.path === fieldPath ? { ...f, alias: aliasValue } : f
+                                )
+                              );
                             };
 
                             return (
@@ -427,7 +442,7 @@ onChange={e => changeAlias(e.target.value)}
                                   <input
                                     type="checkbox"
                                     checked={isSelected}
-onChange={toggleSelect}
+                                    onChange={toggleSelect}
                                     className="h-4 w-4 rounded border-[#333] bg-[#252526] text-[#00E091] focus:ring-2 focus:ring-[#00E091]"
                                   />
                                 </td>
@@ -458,7 +473,7 @@ onChange={toggleSelect}
                                   <input
                                     className="w-full rounded border border-[#333] bg-[#252526] px-1 py-0.5 text-xs text-white focus:border-[#00E091] focus:outline-none"
                                     value={alias}
-onChange={e => changeAlias(e.target.value)}
+                                    onChange={e => changeAlias(e.target.value)}
                                     placeholder="alias..."
                                     disabled={!isSelected}
                                   />
@@ -473,7 +488,7 @@ onChange={e => changeAlias(e.target.value)}
                 )}
               </div>
             )}
-{activeTab === 'Execute' && (<BatchExecutor />)}
+            {activeTab === 'Execute' && <BatchExecutor />}
           </div>
         </div>
       </div>
@@ -483,7 +498,7 @@ onChange={e => changeAlias(e.target.value)}
 
 // -- Execute tab component -- //
 function BatchExecutor() {
-// Zustand state
+  // Zustand state
   const endpoint = useAppStore(s => s.endpoint);
   const method = useAppStore(s => s.method);
   const bodyTemplate = useAppStore(s => s.body);
@@ -752,7 +767,6 @@ function BatchExecutor() {
     () => selectedResponseFields.filter(f => (availableResponseFields || []).includes(f.path)),
     [selectedResponseFields, availableResponseFields]
   );
-
 
   const getNested = (obj: any, path: string) => {
     if (!obj || !path) return '';
